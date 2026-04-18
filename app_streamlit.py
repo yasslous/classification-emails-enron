@@ -21,6 +21,8 @@ vectorizer, model = load_models()
 # Préparation NLP
 nltk.download('punkt', quiet=True)
 nltk.download('stopwords', quiet=True)
+# Au cas où punkt_tab serait requis par ton environnement
+nltk.download('punkt_tab', quiet=True) 
 stop_words = set(stopwords.words('english'))
 
 def preprocess_text(text):
@@ -33,19 +35,24 @@ def preprocess_text(text):
 
 # --- INTERFACE UTILISATEUR ---
 st.title("📧 Détecteur de Spam IA")
-st.write("Entrez le texte d'un email ci-dessous. Notre modèle **Random Forest** analysera son contenu pour déterminer s'il s'agit d'un Spam ou d'un email légitime.")
+st.write("Remplissez le sujet et/ou le corps de l'email ci-dessous. Notre modèle **Random Forest** analysera le texte fusionné pour déterminer s'il s'agit d'un Spam ou d'un email légitime.")
 
-# Zone de texte
-email_input = st.text_area("Collez l'email ici :", height=200, placeholder="Ex: URGENT! You have won a $1000 gift card...")
+# Zones de saisie séparées
+sujet_input = st.text_input("Sujet de l'email :", placeholder="Ex: URGENT! You have won a $1000 gift card")
+message_input = st.text_area("Corps de l'email :", height=200, placeholder="Ex: Click the link below to claim your free money now!...")
 
 # Bouton d'action
 if st.button("Analyser l'email", type="primary"):
-    if email_input.strip() == "":
-        st.warning("⚠️ Veuillez entrer du texte avant de lancer l'analyse.")
+    # On vérifie si les DEUX champs sont vides
+    if sujet_input.strip() == "" and message_input.strip() == "":
+        st.warning("⚠️ Veuillez entrer au moins un sujet ou le corps d'un message avant de lancer l'analyse.")
     else:
         with st.spinner("Analyse en cours..."):
+            # 0. Fusionner le sujet et le message (comme lors de l'entraînement)
+            texte_fusionne = f"{sujet_input} {message_input}".strip()
+            
             # 1. Nettoyage
-            cleaned_text = preprocess_text(email_input)
+            cleaned_text = preprocess_text(texte_fusionne)
             
             # 2. Vectorisation
             vectorized_text = vectorizer.transform([cleaned_text])
